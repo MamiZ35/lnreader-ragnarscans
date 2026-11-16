@@ -41,10 +41,10 @@ const STATUS_MAP: Record<string, string> = {
 
 class RagnarScansPlugin implements Plugin.PluginBase {
   id = 'ragnarscans';
-  name = 'Ragnar Scans';
+  name = 'Ragnar Scans MZ';
   icon = 'src/tr/ragnarscans/icon.png';
   site = 'https://ragnarscans2.com/';
-  version = '1.0.0';
+  version = '1.0.1';
 
   filters = {
     sort: {
