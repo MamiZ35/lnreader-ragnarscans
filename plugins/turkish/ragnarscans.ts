@@ -44,7 +44,7 @@ class RagnarScansPlugin implements Plugin.PluginBase {
   name = 'Ragnar Scans MZ';
   icon = 'src/tr/ragnarscans/icon.png';
   site = 'https://ragnarscans2.com/';
-  version = '1.0.1';
+  version = '1.0.2';
 
   filters = {
     sort: {
@@ -224,9 +224,9 @@ class RagnarScansPlugin implements Plugin.PluginBase {
       const firstRes = await fetchApi(`${baseApi}&page=1`);
       const firstData = (await firstRes.json()) as InitChaptersResponse;
       const allItems: InitChapterItem[] = [...(firstData.items || [])];
-      const totalPages = firstData.total_pages || 1;
+      const totalPages = Number(firstData.total_pages) || 1;
 
-      const batchSize = 10;
+      const batchSize = 4;
       for (let start = 2; start <= totalPages; start += batchSize) {
         const end = Math.min(start + batchSize - 1, totalPages);
         const pageNumbers: number[] = [];
@@ -294,7 +294,17 @@ class RagnarScansPlugin implements Plugin.PluginBase {
     }
 
     content.find('script, style, .lock-card').remove();
-    return content.html() || '';
+    const html = (content.html() || '').trim();
+    if (!html) {
+      if (body.includes('InitMangaEncryptedChapter')) {
+        throw new Error(
+          'Bu bölüm ragnarscans2.com tarafından şifreli/korumalı (InitMangaEncryptedChapter / headless_guard) olarak sunuluyor; yalnızca WebView veya tarayıcı üzerinden okunabilir.',
+        );
+      }
+      throw new Error('Bölüm içeriği boş döndü.');
+    }
+
+    return html;
   }
 
   async searchNovels(
