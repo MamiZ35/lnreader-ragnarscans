@@ -10,7 +10,7 @@ class NovelOkuTRPlugin implements Plugin.PluginBase {
   name = 'NovelOkuTR MZ';
   icon = 'src/tr/novelokutr/icon.png';
   site = 'https://novelokutr.net/';
-  version = '1.0.0';
+  version = '1.0.1';
 
   filters = {
     orderBy: {
@@ -52,7 +52,7 @@ class NovelOkuTRPlugin implements Plugin.PluginBase {
     const orderBy = showLatestNovels
       ? 'latest'
       : filters?.orderBy?.value || 'views';
-    const pageSegment = pageNo > 1 ? `page/${pageNo}/` : '';
+    const pageSegment = pageNo > 1 ? `sayfa/${pageNo}/` : '';
     const url = `${this.site}manga/${pageSegment}?m_orderby=${orderBy}`;
 
     const res = await fetchApi(url);
@@ -176,7 +176,7 @@ class NovelOkuTRPlugin implements Plugin.PluginBase {
     searchTerm: string,
     pageNo: number,
   ): Promise<Plugin.NovelItem[]> {
-    const pageSegment = pageNo > 1 ? `page/${pageNo}/` : '';
+    const pageSegment = pageNo > 1 ? `sayfa/${pageNo}/` : '';
     const url = `${this.site}${pageSegment}?s=${encodeURIComponent(
       searchTerm,
     )}&post_type=wp-manga`;
