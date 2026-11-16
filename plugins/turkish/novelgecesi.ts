@@ -5,12 +5,18 @@ import { FilterTypes, Filters } from '@libs/filterInputs';
 import { defaultCover } from '@libs/defaultCover';
 import { NovelStatus } from '@libs/novelStatus';
 
+type NovelGecesiApiChapter = {
+  chapter: number | string;
+  title?: string;
+  date?: string;
+};
+
 class NovelGecesiPlugin implements Plugin.PluginBase {
   id = 'novelgecesi';
   name = 'Novel Gecesi MZ';
   icon = 'src/tr/novelgecesi/icon.png';
   site = 'https://www.novelgecesi.com/';
-  version = '1.0.0';
+  version = '1.0.1';
 
   filters = {
     sort: {
@@ -184,23 +190,39 @@ class NovelGecesiPlugin implements Plugin.PluginBase {
       novel.status = NovelStatus.Unknown;
     }
 
-    let $chapters = $;
-    const loadMoreHref = $('a#load-more-api').attr('href');
-    if (loadMoreHref) {
+    const chapters: Plugin.ChapterItem[] = [];
+    const loadMoreBtn = $('a#load-more-api');
+    const urlFormat =
+      loadMoreBtn.attr('data-url-format') || cleanPath.replace(/\/+$/, '');
+
+    if (loadMoreBtn.length > 0 && urlFormat) {
       try {
-        const allBody = await this.fetchChecked(loadMoreHref.split('#')[0]);
-        const $all = parseHTML(allBody);
-        if ($all('.episode-item').length >= $('.episode-item').length) {
-          $chapters = $all;
+        const apiBody = await this.fetchChecked(
+          `${this.site}api/series/${urlFormat}/chapters`,
+        );
+        const apiData = JSON.parse(apiBody) as {
+          chapters?: NovelGecesiApiChapter[];
+        };
+        if (Array.isArray(apiData.chapters) && apiData.chapters.length > 0) {
+          for (const ch of apiData.chapters) {
+            const chNo = Number(ch.chapter);
+            chapters.push({
+              name: `Bölüm ${ch.chapter}${ch.title ? `: ${ch.title}` : ''}`,
+              path: `${encodeURIComponent(urlFormat)}/${encodeURIComponent(String(ch.chapter))}`,
+              releaseTime: ch.date ? String(ch.date).split('T')[0] : undefined,
+              chapterNumber: Number.isFinite(chNo) ? chNo : undefined,
+            });
+          }
+          novel.chapters = chapters;
+          return novel;
         }
       } catch {
-        // Keep initial page chapters if load-more fails
+        // Fall back to DOM chapters if API request fails
       }
     }
 
-    const chapters: Plugin.ChapterItem[] = [];
-    $chapters('.episode-item').each((_, el) => {
-      const item = $chapters(el);
+    $('.episode-item').each((_, el) => {
+      const item = $(el);
       const link = item.find('a.episode-link').first();
       const href = link.attr('href');
       const name = item.find('.episode-title').first().text().trim();
